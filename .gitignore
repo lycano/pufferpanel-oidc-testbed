@@ -1,0 +1,9 @@
+# local overrides (ports, other branch paths) that should not end up in the repo
+compose.override.yaml
+.env
+
+# editors and OS
+.vscode/
+.idea/
+*.swp
+.DS_Store

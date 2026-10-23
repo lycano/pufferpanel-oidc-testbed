@@ -1,0 +1,53 @@
+# Local OIDC testbed for PufferPanel PR #1504: Keycloak with a ready realm + PufferPanel built from ../PufferPanel.
+# Both use the host network so the browser and the panel reach Keycloak under the same URL (the issuer must match).
+name: pufferpanel-oidc-testbed
+
+services:
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0
+    network_mode: host
+    command: ["start-dev", "--import-realm", "--http-host=127.0.0.1", "--http-port=8180"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+    volumes:
+      - ./keycloak:/opt/keycloak/data/import:ro,z
+
+  pufferpanel:
+    build:
+      context: ../PufferPanel
+      args:
+        version: pr1504-testbed
+    image: localhost/pufferpanel:pr1504-testbed
+    network_mode: host
+    depends_on:
+      - keycloak
+    environment:
+      PUFFER_WEB_HOST: 127.0.0.1:8088
+      # panel only: no game servers are needed to test the login
+      PUFFER_DAEMON_ENABLE: "false"
+      PUFFER_PANEL_SETTINGS_MASTERURL: http://localhost:8088
+      PUFFER_PANEL_OIDC_ENABLED: "true"
+      PUFFER_PANEL_OIDC_ISSUER: http://localhost:8180/realms/pufferpanel
+      PUFFER_PANEL_OIDC_CLIENTID: pufferpanel
+      PUFFER_PANEL_OIDC_CLIENTSECRET: testbed-secret
+      PUFFER_PANEL_OIDC_BUTTONTEXT: Login with Keycloak
+    # the image's entrypoint plus two panel users (usernames need at least 5 characters); "user add" fails harmlessly
+    # when they already exist, its error is still in the log
+    entrypoint:
+      - sh
+      - -c
+      - |
+        /pufferpanel/bin/pufferpanel db upgrade
+        code=$$?
+        [ $$code -eq 0 ] || [ $$code -eq 9 ] || exit $$code
+        /pufferpanel/bin/pufferpanel user add --name alice --email alice@example.com --password testbed-alice --admin || true
+        /pufferpanel/bin/pufferpanel user add --name bobby --email bobby@example.com --password testbed-bobby --admin || true
+        exec /pufferpanel/bin/pufferpanel run
+    volumes:
+      - pufferpanel-data:/var/lib/pufferpanel
+      - pufferpanel-etc:/etc/pufferpanel
+
+volumes:
+  pufferpanel-data:
+  pufferpanel-etc:

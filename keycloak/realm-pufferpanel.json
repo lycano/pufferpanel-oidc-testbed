@@ -1,0 +1,65 @@
+{
+  "realm": "pufferpanel",
+  "enabled": true,
+  "clients": [
+    {
+      "clientId": "pufferpanel",
+      "name": "PufferPanel",
+      "enabled": true,
+      "protocol": "openid-connect",
+      "publicClient": false,
+      "clientAuthenticatorType": "client-secret",
+      "secret": "testbed-secret",
+      "standardFlowEnabled": true,
+      "directAccessGrantsEnabled": false,
+      "consentRequired": true,
+      "redirectUris": [
+        "http://localhost:8088/auth/oidc/callback"
+      ],
+      "webOrigins": [
+        "http://localhost:8088"
+      ],
+      "attributes": {
+        "pkce.code.challenge.method": "S256"
+      }
+    }
+  ],
+  "users": [
+    {
+      "username": "alice",
+      "enabled": true,
+      "email": "alice@example.com",
+      "emailVerified": true,
+      "firstName": "Alice",
+      "lastName": "Test",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "alice",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-pufferpanel"
+      ]
+    },
+    {
+      "username": "bobby",
+      "enabled": true,
+      "email": "bobby@example.com",
+      "emailVerified": true,
+      "firstName": "Bobby",
+      "lastName": "Test",
+      "credentials": [
+        {
+          "type": "password",
+          "value": "bobby",
+          "temporary": false
+        }
+      ],
+      "realmRoles": [
+        "default-roles-pufferpanel"
+      ]
+    }
+  ]
+}
