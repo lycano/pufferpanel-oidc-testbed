@@ -2,6 +2,11 @@
 compose.override.yaml
 .env
 
+# Playwright
+tests/node_modules/
+tests/test-results/
+tests/playwright-report/
+
 # editors and OS
 .vscode/
 .idea/

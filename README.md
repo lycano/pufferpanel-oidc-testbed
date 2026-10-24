@@ -81,24 +81,34 @@ podman image prune -f
 
 ## Tests
 
-1. **Not linked:** on http://localhost:8088 click "Login with Keycloak", sign in as `alice`/`alice`, accept the consent.
-   Expected: `/auth/oidc/error/notlinked`.
-2. **Link:** "Back to login", sign in with `alice@example.com` / `testbed-alice`, Profile (avatar, top right) → "Two factor authentication" → "Link SSO account".
-   Expected: back on that page with "SSO account linked".
-3. **SSO login:** log out, "Login with Keycloak". Expected: signed in directly, full sidebar.
-4. **Already linked to someone else:** log out of the panel and sign in as `bobby@example.com` / `testbed-bobby` (password), then
-   Profile (avatar, top right) → "Two factor authentication" → "Link SSO account". Keycloak still has alice's session from step 1, so it answers as `alice`.
-   Expected: "This SSO account is already linked to another panel account."
-5. **Denied by the provider:** log out of Keycloak (http://localhost:8180/realms/pufferpanel/account → Sign out), click the
-   SSO button, sign in as `bobby`, click **No** on the consent screen. Expected: `/auth/oidc/error/denied`.
-   Clicking **No** while *linking* (signed in to the panel) instead returns to Profile → "Two factor authentication" with a
-   red toast "The SSO login was cancelled or denied."
-6. **Login not permitted:** link `bobby` (as in 2), then as `alice` remove bobby's permissions (Users → bobby), log out and use SSO
-   as `bobby`. Expected: `/auth/oidc/error/nologin`.
-7. **Provider unreachable:** `podman compose stop keycloak`, click the SSO button. Expected: `/auth/oidc/error/unavailable`.
-   `podman compose start keycloak`, try again: works without restarting the panel.
-8. **Unlink:** Profile → "Two factor authentication" → "Unlink SSO account", log out, SSO again. Expected: `notlinked` again.
-9. **State:** open http://localhost:8088/auth/oidc/callback directly. Expected: `/auth/oidc/error/state`.
+Playwright tests in `tests/` run against the running testbed (Chromium): not linked, linking, SSO login, an account
+linked to someone else, consent denied while signing in and while linking, missing state, unlink, login not permitted
+and an unreachable provider. Each test resets the state first: nobody linked, bobby an admin, the real issuer, and
+Keycloak asks for consent again.
+
+Needs Node.js 20 or newer with npm.
+
+1. Start the testbed (see "Start and stop") and wait until http://localhost:8088 answers.
+2. Install once, in `pufferpanel-oidc-testbed/tests/`:
+
+   ```sh
+   cd tests
+   npm install
+   npx playwright install chromium   # downloads the browser
+   ```
+
+   On distributions Playwright does not support officially (e.g. Fedora) it prints "your OS is not officially
+   supported" and downloads its Ubuntu build, which works.
+3. Run, still in `tests/`:
+
+   ```sh
+   npm run test:ui                    # Playwright's UI: pick single tests, watch each step, time-travel through the run
+   npm test                           # all tests headless
+   npm run test:headed                # visible browser, 500 ms between actions (SLOWMO=1000 npm run test:headed for slower)
+   npm run test:debug                 # inspector: step through every action by hand
+   npm run test:headed -- -g "linking" # only the tests whose name contains "linking" (works with every mode)
+   npx playwright show-report         # details, screenshots and traces of failed tests after a headless run
+   ```
 
 ## Notes
 
